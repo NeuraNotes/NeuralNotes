@@ -22,7 +22,7 @@ const Sidebar = () => {
         <NavLink 
           to="/" 
           className={({ isActive }) => 
-            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`
+            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-yellow-500'}`
           }
           end
         >
@@ -36,7 +36,7 @@ const Sidebar = () => {
         <NavLink 
           to="/notes" 
           className={({ isActive }) => 
-            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`
+            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-yellow-500'}`
           }
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -62,7 +62,7 @@ const Sidebar = () => {
         <NavLink 
           to="/todo" 
           className={({ isActive }) => 
-            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`
+            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-yellow-500'}`
           }
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -75,7 +75,7 @@ const Sidebar = () => {
         <NavLink 
           to="/calendar" 
           className={({ isActive }) => 
-            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`
+            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-yellow-500'}`
           }
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -91,7 +91,7 @@ const Sidebar = () => {
         <NavLink 
           to="/account" 
           className={({ isActive }) => 
-            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`
+            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-yellow-500'}`
           }
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -104,7 +104,7 @@ const Sidebar = () => {
         <NavLink 
           to="/settings" 
           className={({ isActive }) => 
-            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-300'}`
+            `flex flex-col items-center py-2 px-2 ${isActive ? 'text-white' : 'text-gray-400 hover:text-yellow-500'}`
           }
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">

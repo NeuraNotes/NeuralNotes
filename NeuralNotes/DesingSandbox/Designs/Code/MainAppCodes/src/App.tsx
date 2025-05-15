@@ -3,12 +3,13 @@ import { Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from './config/constants';
 
-// Lazy-loaded bileşenler
+// Lazy-loaded components
 const MainLayout = lazy(() => import('./layouts/MainLayout'));
 
-// Sayfa lazy imports
+// Page lazy imports
 const Home = lazy(() => import('./pages/Home'));
 const NotePage = lazy(() => import('./pages/NotePage'));
+const Notes = lazy(() => import('./pages/Notes'));
 
 // Placeholder pages for new routes
 const NotesPage = () => <div className="p-8"><h1 className="text-3xl font-bold mb-4">Notes Page</h1><p>This is a placeholder for the Notes page.</p></div>;
@@ -33,7 +34,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path={ROUTES.NOTE} element={<NotePage />} />
-          <Route path="notes" element={<NotesPage />} />
+          <Route path="notes" element={<Notes />} />
           <Route path="todo" element={<TodoPage />} />
           <Route path="canvas" element={<CanvasPage />} />
           <Route path="calendar" element={<CalendarPage />} />
