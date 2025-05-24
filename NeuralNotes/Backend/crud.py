@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from . import models, schemas
+import models, schemas
 
 def create_note(db: Session, note: schemas.NoteCreate, user_id: int):
     db_note = models.Note(**note.dict(), owner_id=user_id)

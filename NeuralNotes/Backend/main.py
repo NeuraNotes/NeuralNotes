@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import notes, labels, users
+from routers import notes, labels, users
 
 app = FastAPI()
 
