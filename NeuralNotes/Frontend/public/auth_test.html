@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #282c34; color: #fff; }
+        .container { background-color: #3a3f4a; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); width: 400px; }
+        h2 { text-align: center; color: #61dafb; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="email"],
+        input[type="text"],
+        input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #444;
+            color: #fff;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #61dafb;
+            color: #282c34;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover { background-color: #4fa3d1; }
+        .message { margin-top: 20px; text-align: center; color: #f0f0f0; }
+        .error { color: #ff6b6b; }
+        .success { color: #6bff80; }
+        .form-toggle { text-align: center; margin-top: 20px; }
+        .form-toggle a { color: #61dafb; text-decoration: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="signup-form">
+            <h2>Sign Up</h2>
+            <label for="signup-email">Email:</label>
+            <input type="email" id="signup-email" placeholder="Enter your email">
+            <label for="signup-username">Username:</label>
+            <input type="text" id="signup-username" placeholder="Choose a username">
+            <label for="signup-password">Password:</label>
+            <input type="password" id="signup-password" placeholder="Choose a password">
+            <button onclick="handleSignup()">Sign Up</button>
+            <div class="message" id="signup-message"></div>
+            <div class="form-toggle">
+                Already have an account? <a onclick="showLoginForm()">Login here</a>
+            </div>
+        </div>
+
+        <div id="login-form" style="display: none;">
+            <h2>Login</h2>
+            <label for="login-email">Email:</label>
+            <input type="email" id="login-email" placeholder="Enter your email">
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password" placeholder="Enter your password">
+            <button onclick="handleLogin()">Login</button>
+            <div class="message" id="login-message"></div>
+            <div class="form-toggle">
+                Don't have an account? <a onclick="showSignupForm()">Sign up here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000'; // Backend adresin
+
+        function showLoginForm() {
+            document.getElementById('signup-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        function showSignupForm() {
+            document.getElementById('signup-form').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+        }
+
+        async function handleSignup() {
+            const email = document.getElementById('signup-email').value;
+            const username = document.getElementById('signup-username').value;
+            const password = document.getElementById('signup-password').value;
+            const messageDiv = document.getElementById('signup-message');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, username, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = 'Signup successful! You can now login.';
+                    setTimeout(showLoginForm, 2000); // 2 saniye sonra login formuna geç
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.detail || 'Signup failed!';
+                }
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'An error occurred during signup.';
+                console.error('Signup error:', error);
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const messageDiv = document.getElementById('login-message');
+
+            // OAuth2PasswordRequestForm beklentisi için FormData kullanıyoruz
+            const formData = new URLSearchParams();
+            formData.append('username', email); // FastAPI'nin 'username' alanına email beklediğini unutma
+            formData.append('password', password);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString(),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = 'Login successful!';
+                    
+                    // Token ve kullanıcı bilgilerini localStorage'a kaydet (test amaçlı, üretimde daha güvenli yöntemler düşünülmeli)
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('token_type', data.token_type);
+                    localStorage.setItem('user_username', data.user.username); // Kullanıcı adını da kaydet
+                    localStorage.setItem('user_email', data.user.email);
+                    // Diğer user bilgilerini de kaydedebilirsin
+
+                    alert(`Login successful! Welcome ${data.user.username}`);
+                    window.location.href = '/'; // Ana sayfaya yönlendir
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.detail || 'Login failed! Check your credentials.';
+                }
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'An error occurred during login.';
+                console.error('Login error:', error);
+            }
+        }
+
+        // Sayfa yüklendiğinde varsayılan formu göster
+        document.addEventListener('DOMContentLoaded', showSignupForm);
+    </script>
+</body>
+</html>
