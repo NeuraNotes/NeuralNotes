@@ -100,7 +100,7 @@ Proje, GitHub Actions ve Netlify ile otomatik CI/CD pipeline'ına sahiptir:
 - [React Dokümantasyonu](https://react.dev)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [Framer Motion](https://www.framer.com/motion/)
-- [react-i18next](https://react.i18next.com/)
+- [react-v19](https://react.dev/blog/2024/12/05/react-19)
 
 ## 📜 Lisans
 
