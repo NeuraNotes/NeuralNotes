@@ -23,6 +23,12 @@ class Label(Base):
     name = Column(String, unique=True, index=True) #TODO: Uzunluk kontrolü eklenebilir
     notes = relationship('Note', back_populates='label')
 
+class Folder(Base):
+    __tablename__ = 'folders'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    notes = relationship('Note', back_populates='folder')
+
 #Note tablosu için veritabanı modeli
 class Note(Base):
     __tablename__ = 'notes'
@@ -31,5 +37,6 @@ class Note(Base):
     content = Column(Text)
     owner_id = Column(Integer, ForeignKey('users.id'))
     label_id = Column(Integer, ForeignKey('labels.id'))
+    folder_id = Column(Integer, ForeignKey('folders.id'), nullable=True)
     owner = relationship('User', back_populates='notes')
     label = relationship('Label', back_populates='notes') 

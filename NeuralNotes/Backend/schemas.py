@@ -16,10 +16,21 @@ class NoteCreate(NoteBase):
 class NoteUpdate(NoteBase):
     pass
 
-# API yanıtı olarak gönderilecek not modeli (NoteBase'den miras
+# API yanıtı olarak gönderilecek not modeli (NoteBase'den miras)
 class NoteOut(NoteBase):
     id: int
     owner_id: int
+    class Config:
+        from_attributes = True
+
+class FolderBase(BaseModel):
+    name: str
+
+class FolderCreate(FolderBase):
+    pass
+
+class FolderOut(FolderBase):
+    id: int
     class Config:
         from_attributes = True
 

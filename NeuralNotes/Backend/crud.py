@@ -10,6 +10,16 @@ def create_note(db: Session, note: schemas.NoteCreate, user_id: int):
     db.refresh(db_note)
     return db_note
 
+def create_folder(db: Session, folder: schemas.FolderCreate):
+    db_folder = models.Folder(**folder.model_dump())
+    db.add(db_folder)
+    db.commit()
+    db.refresh(db_folder)
+    return db_folder
+
+def get_folders(db: Session):
+    return db.query(models.Folder).all()
+
 def get_note(db: Session, note_id: int):
     return db.query(models.Note).filter(models.Note.id == note_id).first()
 
