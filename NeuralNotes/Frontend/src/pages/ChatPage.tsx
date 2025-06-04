@@ -6,7 +6,7 @@ import RecentNotesDisplay from '../components/RecentNotesDisplay';
 
 const ChatPage: React.FC = () => {
   const { t } = useTranslation();
-  const userName = "Atakan";
+  const userName = "User";
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-neutral-50 dark:bg-neutral-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">

@@ -38,5 +38,6 @@ class Note(Base):
     owner_id = Column(Integer, ForeignKey('users.id'))
     label_id = Column(Integer, ForeignKey('labels.id'))
     folder_id = Column(Integer, ForeignKey('folders.id'), nullable=True)
+    folder = relationship('Folder', back_populates='notes')
     owner = relationship('User', back_populates='notes')
     label = relationship('Label', back_populates='notes') 

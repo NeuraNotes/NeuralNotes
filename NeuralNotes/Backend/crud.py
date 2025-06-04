@@ -49,6 +49,14 @@ def get_label(db: Session, label_id: int):
     return db.query(models.Label).filter(models.Label.id == label_id).first()
 
 def create_label(db: Session, label: schemas.LabelBase):
+    # Check if label with the same name already exists
+    existing_label = db.query(models.Label).filter(models.Label.name == label.name).first()
+    if existing_label:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Label with this name already exists"
+        )
+
     db_label = models.Label(**label.model_dump())
     db.add(db_label)
     db.commit()
@@ -93,4 +101,11 @@ def authenticate_user(db: Session, email: str, password: str):
         return False
     if not security.verify_password(password, user.hashed_password):
         return False
-    return user 
+    return user
+
+def delete_label(db: Session, label_id: int):
+    db_label = db.query(models.Label).filter(models.Label.id == label_id).first()
+    if db_label:
+        db.delete(db_label)
+        db.commit()
+    return db_label 
