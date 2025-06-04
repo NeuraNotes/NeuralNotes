@@ -2,6 +2,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { APP_NAME } from '../config/constants';
+import React, { useState, useEffect } from 'react';
+
+// Assuming a Note type exists, similar to the backend schema
+interface Note {
+  id: number;
+  title: string;
+  content: string;
+  folder_id: number | null; // Allow null as per schema
+  label_id: number | null; // Allow null as per schema
+  owner_id: number;
+  // add other fields as needed, like creation/update dates
+}
 
 /**
  * Tekil not sayfası bileşeni
@@ -12,14 +24,41 @@ const NotePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Örnek not verisi (normalde API'den gelecek)
-  const note = {
-    id: id || '0',
-    title: 'Örnek Not Detayı',
-    content: 'Bu, bir not detay sayfasıdır. Gerçek bir uygulamada bu içerik API\'den gelecektir.',
-    date: new Date().toISOString(),
-    tags: ['örnek', 'detay']
-  };
+  const [note, setNote] = useState<Note | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNote = async () => {
+      if (!id) {
+        setError(t('notePage.errorMissingId', 'Note ID is missing.'));
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      try {
+        // Use the backend endpoint to fetch a single note by ID
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/notes/${id}`);
+        if (!response.ok) {
+          // Attempt to read error message from backend if available
+          const errorData = await response.json();
+          console.error('Failed to fetch note:', response.status, errorData);
+          throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        const data: Note = await response.json();
+        setNote(data);
+      } catch (err: any) {
+        console.error("Error fetching note:", err);
+        setError(t('notePage.fetchError', 'Failed to load note:') + ` ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNote();
+  }, [id, t]); // Re-run effect if note ID or translation function changes
 
   // Animasyon için varyantlar
   const containerVariants = {
@@ -32,8 +71,24 @@ const NotePage = () => {
     }
   };
 
-  // Tarih formatını düzenle
-  const formattedDate = new Date(note.date).toLocaleDateString('tr-TR', {
+  // Handle loading, error, and note not found states
+  if (loading) {
+    return <div className="max-w-4xl mx-auto p-6">{t('common.loading', 'Loading...')}</div>;
+  }
+
+  if (error) {
+    return <div className="max-w-4xl mx-auto p-6 text-red-500">{error}</div>;
+  }
+
+  if (!note) {
+    return <div className="max-w-4xl mx-auto p-6 text-yellow-600">{t('notePage.notFound', 'Note not found.')}</div>;
+  }
+
+  // Tarih formatını düzenle - Assuming your backend returns a date/timestamp field, e.g., 'created_at' or 'updated_at'
+  // For now, I'll use a placeholder or add a dummy date if your schema doesn't have one
+  // If your backend Note schema includes a datetime field, replace 'new Date().toISOString()' with 'note.your_date_field'
+  const noteDate = new Date().toISOString(); // Placeholder - replace with actual note date if available
+  const formattedDate = new Date(noteDate).toLocaleDateString('tr-TR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -43,7 +98,7 @@ const NotePage = () => {
 
   return (
     <motion.div
-      className="max-w-4xl mx-auto"
+      className="max-w-4xl mx-auto p-6"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -58,9 +113,11 @@ const NotePage = () => {
           </svg>
           {t('common.back')}
         </button>
-        
+
+        {/* Display date if available */}
+        {/* Replace formattedDate with note.your_date_field if available in backend schema */}
         <div className="text-gray-500 dark:text-gray-400 text-sm">
-          {formattedDate}
+           {formattedDate}
         </div>
       </div>
 
@@ -68,13 +125,16 @@ const NotePage = () => {
         <h1 className="text-2xl font-bold mb-4">
           {note.title || `${APP_NAME} Not`}
         </h1>
-        
+
         <div className="prose dark:prose-invert max-w-none mb-6">
+          {/* Display note content */}
           <p className="whitespace-pre-line">
             {note.content}
           </p>
         </div>
-        
+
+        {/* Tags section - if you add tags to your Note schema and backend */}
+        {/*
         {note.tags && note.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {note.tags.map((tag) => (
@@ -87,6 +147,7 @@ const NotePage = () => {
             ))}
           </div>
         )}
+        */}
       </div>
     </motion.div>
   );

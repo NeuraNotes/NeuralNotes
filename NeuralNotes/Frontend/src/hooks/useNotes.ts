@@ -1,4 +1,12 @@
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../api/axiosInstance';
+import { NoteOut, NoteCreate, NoteUpdate } from '../types/backend';
+
+const noteKeys = {
+  all: ['notes'] as const,
+  lists: () => [...noteKeys.all, 'list'] as const,
+  note: (noteId: number) => [...noteKeys.all, noteId] as const,
+};
 
 // Not tipi tanımlaması
 export interface Note {
@@ -17,144 +25,71 @@ export type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'lastUpdated';
  * Şimdilik mock veri kullanıyor, ileride API'ye bağlanacak
  */
 export function useNotes() {
-  // Örnek notlar (mock veri)
-  const mockNotes: Note[] = [
-    {
-      id: '1',
-      title: 'React Hooks',
-      content: 'useEffect, useState ve useContext hook\'larının kullanımı hakkında notlar.',
-      date: new Date().toISOString(),
-      tags: ['react', 'hooks', 'frontend']
+  return useQuery<NoteOut[]>({
+    queryKey: noteKeys.lists(),
+    queryFn: async () => {
+      const response = await api.get('/notes/');
+      return response.data;
     },
-    {
-      id: '2',
-      title: 'Tailwind CSS İpuçları',
-      content: 'Tailwind CSS ile responsive tasarım ve koyu tema desteği ekleme üzerine ipuçları.',
-      date: new Date(Date.now() - 86400000).toISOString(), // 1 gün önce
-      tags: ['css', 'tailwind', 'frontend']
-    },
-    {
-      id: '3',
-      title: 'TypeScript Tipleri',
-      content: 'TypeScript\'te generic tiplerin kullanımı ve utility type\'lar hakkında.',
-      date: new Date(Date.now() - 172800000).toISOString(), // 2 gün önce
-      tags: ['typescript', 'frontend']
-    },
-    {
-      id: '4',
-      title: 'Framer Motion Animasyonları',
-      content: 'React uygulamalarında Framer Motion ile performanslı animasyonlar oluşturma.',
-      date: new Date(Date.now() - 259200000).toISOString(), // 3 gün önce
-      tags: ['animation', 'react', 'frontend']
-    },
-    {
-      id: '5',
-      title: 'CI/CD Pipeline Kurulumu',
-      content: 'GitHub Actions kullanarak otomatik test ve deployment pipeline\'ı oluşturma.',
-      date: new Date(Date.now() - 345600000).toISOString(), // 4 gün önce 
-      tags: ['devops', 'github', 'ci-cd']
-    }
-  ];
+  });
+}
 
-  // State tanımlamaları
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Yeni not ekleme
-   */
-  const addNote = (note: Omit<Note, 'id' | 'date'>) => {
-    const newNote = {
-      ...note,
-      id: Math.random().toString(36).substring(2, 9), // Basit ID oluşturma
-      date: new Date().toISOString()
-    };
-
-    setNotes([newNote, ...notes]);
-    return newNote;
-  };
-
-  /**
-   * Not silme
-   */
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter(note => note.id !== id));
-  };
-
-  /**
-   * Not güncelleme
-   */
-  const updateNote = (id: string, updatedNote: Partial<Omit<Note, 'id' | 'date'>>) => {
-    setNotes(
-      notes.map(note => 
-        note.id === id 
-          ? { 
-              ...note, 
-              ...updatedNote,
-              date: new Date().toISOString() // Güncellenme tarihini güncelle
-            } 
-          : note
-      )
-    );
-  };
-
-  /**
-   * Not detayını getirme
-   */
-  const getNote = (id: string) => {
-    return notes.find(note => note.id === id) || null;
-  };
-
-  /**
-   * Notları filtreleme
-   */
-  const filterNotes = (searchTerm: string, tag: string = 'all') => {
-    return notes.filter(note => {
-      // Etiket filtresi
-      const tagMatch = tag === 'all' || note.tags.includes(tag);
-      
-      // Arama filtresi
-      const searchMatch = !searchTerm || 
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      return tagMatch && searchMatch;
+// Hook to fetch a single note by ID
+export function useNote(noteId: number) {
+    return useQuery<NoteOut>({
+        queryKey: noteKeys.note(noteId),
+        queryFn: async () => {
+          const response = await api.get(`/notes/${noteId}`);
+          return response.data;
+        },
+        enabled: !!noteId, // Only run the query if noteId is truthy
     });
-  };
+}
 
-  /**
-   * Notları sıralama
-   */
-  const sortNotes = (notes: Note[], sortBy: SortOption = 'newest') => {
-    const sortedNotes = [...notes];
-    
-    switch (sortBy) {
-      case 'newest':
-        return sortedNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      case 'oldest':
-        return sortedNotes.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      case 'alphabetical':
-        return sortedNotes.sort((a, b) => a.title.localeCompare(b.title));
-      case 'lastUpdated':
-        return sortedNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      default:
-        return sortedNotes;
-    }
-  };
+// Hook to create a new note
+export function useCreateNote() {
+  const queryClient = useQueryClient();
+  return useMutation<NoteOut, Error, NoteCreate>({
+    mutationFn: async (newNoteData) => {
+      const response = await api.post('/notes/', newNoteData);
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate the notes list cache to refetch notes after creation
+      queryClient.invalidateQueries({ queryKey: noteKeys.lists() });
+    },
+  });
+}
 
-  return {
-    notes,
-    loading,
-    error,
-    addNote,
-    deleteNote,
-    updateNote,
-    getNote,
-    filterNotes,
-    sortNotes
-  };
+// Hook to update an existing note
+export function useUpdateNote() {
+  const queryClient = useQueryClient();
+  return useMutation<NoteOut, Error, { noteId: number; data: NoteUpdate }>({
+    mutationFn: async ({ noteId, data }) => {
+      const response = await api.put(`/notes/${noteId}`, data);
+      return response.data;
+    },
+    onSuccess: (updatedNote) => {
+      // Invalidate the specific note cache and the notes list cache
+      queryClient.invalidateQueries({ queryKey: noteKeys.note(updatedNote.id) });
+      queryClient.invalidateQueries({ queryKey: noteKeys.lists() });
+    },
+  });
+}
+
+// Hook to delete a note
+export function useDeleteNote() {
+  const queryClient = useQueryClient();
+  return useMutation<NoteOut, Error, number>({
+    mutationFn: async (noteId) => {
+      const response = await api.delete(`/notes/${noteId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate the notes list cache to refetch notes after deletion
+      queryClient.invalidateQueries({ queryKey: noteKeys.lists() });
+    },
+  });
 }
 
 export default useNotes;

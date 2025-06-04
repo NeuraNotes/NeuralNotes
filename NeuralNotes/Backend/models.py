@@ -1,8 +1,16 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean, Table
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime, UTC
 
 Base = declarative_base()
+
+# Association table for many-to-many relationship between notes and folders
+note_folder_association = Table(
+    'note_folder_association',
+    Base.metadata,
+    Column('note_id', Integer, ForeignKey('notes.id'), primary_key=True),
+    Column('folder_id', Integer, ForeignKey('folders.id'), primary_key=True)
+)
 
 #User tablosu için veritabanı modeli
 class User(Base):
@@ -27,7 +35,7 @@ class Folder(Base):
     __tablename__ = 'folders'
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    notes = relationship('Note', back_populates='folder')
+    notes = relationship('Note', secondary=note_folder_association, back_populates='folders')
 
 #Note tablosu için veritabanı modeli
 class Note(Base):
@@ -37,7 +45,6 @@ class Note(Base):
     content = Column(Text)
     owner_id = Column(Integer, ForeignKey('users.id'))
     label_id = Column(Integer, ForeignKey('labels.id'))
-    folder_id = Column(Integer, ForeignKey('folders.id'), nullable=True)
-    folder = relationship('Folder', back_populates='notes')
     owner = relationship('User', back_populates='notes')
-    label = relationship('Label', back_populates='notes') 
+    label = relationship('Label', back_populates='notes')
+    folders = relationship('Folder', secondary=note_folder_association, back_populates='notes') 

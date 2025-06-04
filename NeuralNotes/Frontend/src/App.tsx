@@ -36,11 +36,25 @@ const AccountPage = () => <div className="p-8"><h1 className="text-3xl font-bold
  */
 function App() {
   const { t, i18n } = useTranslation();
-  const [folders, setFolders] = useState<Folder[]>([
-    { id: '1', name: t('folders.general', 'General') },
-    { id: '2', name: t('folders.work', 'Work') },
-    { id: '3', name: t('folders.personal', 'Personal') },
-  ]);
+  const [folders, setFolders] = useState<Folder[]>([]);
+
+  useEffect(() => {
+    const fetchFolders = async () => {
+      try {
+        const response = await fetch(import.meta.env.VITE_API_URL + '/folders');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: Folder[] = await response.json();
+        setFolders(data);
+      } catch (error) {
+        console.error("Failed to fetch folders:", error);
+        // Optionally set an error state or show a message
+      }
+    };
+
+    fetchFolders();
+  }, []);
 
   const addFolder = (folderName: string) => {
     const newFolder: Folder = {

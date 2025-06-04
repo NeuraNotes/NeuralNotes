@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import notes, labels, users, auth
+from routers import notes, labels, users, auth, folders
 
 app = FastAPI()
 
@@ -18,6 +18,7 @@ app.include_router(notes.router)
 app.include_router(labels.router)
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(folders.router)
 
 @app.get("/")
 def read_root():

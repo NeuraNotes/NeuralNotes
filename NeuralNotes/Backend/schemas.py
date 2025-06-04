@@ -1,12 +1,12 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class NoteBase(BaseModel):
     title: str
     content: str
     label_id: Optional[int] = None
-    folder_id: Optional[int] = None
+    folder_ids: List[int] = []
 
 # Yeni not oluşturmak için kullanılan Pydantic modeli (NoteBase'den miras)  
 class NoteCreate(NoteBase):
@@ -14,12 +14,18 @@ class NoteCreate(NoteBase):
 
 # Not güncellemek için kullanılan Pydantic modeli (NoteBase'den miras)
 class NoteUpdate(NoteBase):
-    pass
+    folder_ids: Optional[List[int]] = None
 
 # API yanıtı olarak gönderilecek not modeli (NoteBase'den miras)
-class NoteOut(NoteBase):
+class NoteOut(BaseModel):
     id: int
+    title: str
+    content: str
     owner_id: int
+    label_id: Optional[int] = None
+    folders: List["FolderOut"] = []
+    label: Optional["LabelOut"] = None
+
     class Config:
         from_attributes = True
 
@@ -33,6 +39,10 @@ class FolderOut(FolderBase):
     id: int
     class Config:
         from_attributes = True
+
+# Add schema for updating a folder
+class FolderUpdate(FolderBase):
+    name: Optional[str] = None
 
 # Etiketler için temel Pydantic modeli
 class LabelBase(BaseModel):
@@ -73,3 +83,6 @@ class UserOut(UserBase):
     id: int
     class Config:
         from_attributes = True
+
+FolderOut.model_rebuild()
+LabelOut.model_rebuild()

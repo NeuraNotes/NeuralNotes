@@ -88,7 +88,7 @@ const NewNotePage: React.FC<NewNotePageProps> = ({ folders }) => { // Destructur
     alert(t('newNote.alertNoteAutoSaved', 'Note auto-saved (simulated)!') + `\nTitle: ${title}\nFolder ID: ${selectedFolder}\nFolder Name: ${folders.find(f => f.id === selectedFolder)?.name || 'N/A'}`);
   };
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!title.trim()) {
       alert(t('newNote.alertTitleRequired', 'Title is required to save the note.'));
       return;
@@ -97,12 +97,44 @@ const NewNotePage: React.FC<NewNotePageProps> = ({ folders }) => { // Destructur
       alert(t('newNote.alertFolderRequired', 'Please select a folder to save the note.'));
       return;
     }
-    console.log('Saving note:', { title, content, selectedFolder });
-    alert(t('newNote.alertNoteSaved', 'Note saved (simulated)!') + `\nTitle: ${title}\nFolder ID: ${selectedFolder}\nFolder Name: ${folders.find(f => f.id === selectedFolder)?.name || 'N/A'}`);
-    // Optionally reset fields
-    // setTitle('');
-    // setContent('');
-    // setSelectedFolder('');
+
+    const newNoteData = {
+      title: title.trim(),
+      content: content,
+      folder_id: selectedFolder ? parseInt(selectedFolder, 10) : null, // Ensure folder_id is a number or null
+      // label_id: // Add label_id if needed
+    };
+
+    console.log('Attempting to save note:', newNoteData);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/notes/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add Authorization header if your API requires it
+        },
+        body: JSON.stringify(newNoteData),
+      });
+
+      if (!response.ok) {
+        // Attempt to read error message from backend if available
+        const errorData = await response.json();
+        console.error('Failed to save note:', response.status, errorData);
+        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      const savedNote = await response.json();
+      console.log('Note saved successfully:', savedNote);
+      alert(t('newNote.alertNoteSavedSuccess', 'Note saved successfully!'));
+
+      // Optionally navigate to the saved note's page or the folder page
+      navigate(`/folders/${selectedFolder}`); // Navigate to the folder page after saving
+
+    } catch (error: any) {
+      console.error("Error saving note:", error);
+      alert(t('newNote.alertNoteSavedError', 'Failed to save note:') + ` ${error.message}`);
+    }
   };
 
   const starterCards = [
@@ -125,8 +157,8 @@ const NewNotePage: React.FC<NewNotePageProps> = ({ folders }) => { // Destructur
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto px-4 pt-4 pb-8 md:pt-6 md:pb-12 text-neutral-800 dark:text-neutral-200">
-      {/* Header with Folder Select */}
-      <div className="flex items-center justify-start mb-4 md:mb-6">
+      {/* Header with Folder Select and Save Button */}
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <select
           value={selectedFolder}
           onChange={(e) => setSelectedFolder(e.target.value)}
@@ -139,6 +171,13 @@ const NewNotePage: React.FC<NewNotePageProps> = ({ folders }) => { // Destructur
             </option>
           ))}
         </select>
+        {/* Save Button */}
+        <button
+          onClick={handleSaveNote}
+          className="ml-4 px-4 py-2 bg-[rgb(var(--primary-rgb))] text-white rounded-md hover:bg-[rgba(var(--primary-rgb),0.9)] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950 transition-colors duration-150 text-sm font-medium"
+        >
+          {t('newNote.saveNoteButton', 'Save Note')}
+        </button>
       </div>
 
       {/* Title Input */}

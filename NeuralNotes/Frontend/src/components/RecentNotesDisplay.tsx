@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import NoteCard from './NoteCard';
@@ -6,38 +6,64 @@ import SearchBar from './SearchBar';
 import TagFilter from './TagFilter';
 import { ChevronDown } from 'lucide-react';
 import { useLayoutMode } from '../contexts/LayoutModeContext';
-import ThemeToggle from './ThemeToggle';
-import LayoutModeSwitcher from './LayoutModeSwitcher';
-
-// Mock data for notes - replace with actual data fetching later
-const mockNotes = [
-  { id: '1', title: 'and Morty', content: 'Sezon 2 bölüm 5, sondan 10dk kala ve 8:56 öncesi (buza...)', date: 'May 3', imageUrl: 'https://placehold.co/600x400/202124/FFF?text=R%26M', tags: ['tv-show', 'animation'], isStarred: true },
-  { id: '2', title: 'Nokron', content: 'Elden Ring Nokron eternal city.', date: 'April 22', imageUrl: 'https://placehold.co/600x400/2a2b2d/FFF?text=Nokron', tags: ['game', 'elden-ring'], isStarred: true },
-  { id: '3', title: 'Kendine İnanç', content: 'En büyük yolculuk, kendine duyduğun inancın sınırlarını aşmaktır. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod.', date: 'January 6', tags: ['self-improvement'], isStarred: true },
-  { id: '4', title: 'Kardeşime', content: 'Kendi müzik albüm resim albümlerini çizmesini söyle. December 21, 2024', date: 'December 21', imageUrl: 'https://placehold.co/600x400/303134/FFF?text=Grimes', tags: ['music', 'art'] },
-  { id: '5', title: 'Rezonans ve İnsan', content: 'Rezonans insan, insan vücuduna nasıl etki eder?', date: 'March 26', tags: ['science', 'health'] },
-  { id: '6', title: 'GameDev Scratch', content: 'Karakter hareket sistemi prototipi. Sprite animasyonlarını ekle. Basit çarpışma algısı test et.', date: 'September 28', tags: ['gamedev', 'programming'] },
-  { id: '7', title: 'Algoritma', content: 'Kapsülleme ile ilgili güzel banka yönetim uygulaması yap.', date: 'April 30', tags: ['programming', 'study'] },
-  { id: '8', title: 'Discovery EU', content: 'No text.', date: 'April 13', imageUrl: 'https://placehold.co/600x400/3a3b3d/FFF?text=Discovery', tags: ['space', 'exploration'] },
-  { id: '9', title: 'Andromeda Galaxy', content: '2.2 milyon ışık yılı uzak...', date: 'February 23', imageUrl: 'https://placehold.co/600x400/404144/FFF?text=Andromeda', tags: ['space', 'astronomy'] },
-  { id: '10', title: 'Egzersiz Rutin', content: 'Pazartesi: Göğüs + Triceps. Çarşamba: Sırt + Biceps. Cuma: Bacak + Omuz. Pazar: Karın + Ön kol.', date: 'December 17', tags: ['fitness', 'health'] },
-  { id: '11', title: 'Haftalık Alışveriş', content: 'Süt, yumurta, tam buğday ekmek, avokado, yoğurt.', date: 'October 18', tags: ['shopping', 'personal'] },
-  { id: '12', title: 'API Dökümantasyonu', content: 'GET /notes -> Tüm notları döner.', date: 'November 13', tags: ['work', 'programming'] },
-  { id: '13', title: 'Skull Knight', content: 'Yaklaşık 1000 yaşında.', date: 'November 13', imageUrl: 'https://placehold.co/600x400/4a4b4d/FFF?text=Berserk', tags: ['manga', 'berserk'] },
-];
+// Assuming ThemeToggle and LayoutModeSwitcher are used elsewhere or were part of a larger context not shown
+// import ThemeToggle from './ThemeToggle';
+// import LayoutModeSwitcher from './LayoutModeSwitcher';
+import type { LabelOut, FolderOut } from '../types/backend'; // Import types using type-only import
 
 const ITEMS_PER_LOAD = 8;
+
+// Define NoteData interface based on backend NoteOut schema
+interface NoteData {
+  id: number; // Changed to number based on backend schema
+  title: string;
+  content: string; // Changed to required based on backend schema
+  owner_id: number; // Added based on backend schema
+  label_id: number | null; // Added based on backend schema
+  folders: FolderOut[]; // Added based on backend schema
+  label: LabelOut | null; // Added based on backend schema
+  date?: string; // Keep date as optional for now, not present in backend schema
+  imageUrl?: string; // Keep optional imageUrl from mock data
+  isStarred?: boolean; // Keep optional isStarred from mock data
+  // Note: The backend NoteOut does not include imageUrl or isStarred.
+  // You may need to add these to the backend schema or handle them frontend-only.
+}
+
+// Tag interface to match what TagFilter expects
+interface Tag {
+    id: string; // TagFilter seems to expect string ids
+    label: string;
+}
+
 
 const RecentNotesDisplay: React.FC = () => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [displayedNotes, setDisplayedNotes] = useState(mockNotes.slice(0, ITEMS_PER_LOAD));
-  const [loadedCount, setLoadedCount] = useState(ITEMS_PER_LOAD);
-  const [allNotes, setAllNotes] = useState(mockNotes);
-  const { layoutMode, setLayoutMode } = useLayoutMode();
+  // Change to selectedLabelIds, expecting number[] or string[] depending on TagFilter
+  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
+  
+  const [originalNotes, setOriginalNotes] = useState<NoteData[]>([]); // Holds all notes from API
+  const [filteredNotes, setFilteredNotes] = useState<NoteData[]>([]); // Holds notes after search/tag filters
+  const [displayedNotes, setDisplayedNotes] = useState<NoteData[]>([]); // Paginated notes for display
+  
+  const [loadedCount, setLoadedCount] = useState(ITEMS_PER_LOAD); // Will be adjusted by effects
+  const [loading, setLoading] = useState(true);
+  const { layoutMode } = useLayoutMode(); // Removed setLayoutMode as it's not used here
 
-  const availableTags = Array.from(new Set(allNotes.flatMap(note => note.tags ?? []))).map(tag => ({id: tag, label: t(`tags.${tag}`, tag)}));
+  // Available labels derived from the original full dataset
+  const availableLabels: Tag[] = useMemo(() => {
+    const uniqueLabels = new Map<number, string>();
+    originalNotes.forEach(note => {
+      if (note.label) {
+        uniqueLabels.set(note.label.id, note.label.name);
+      }
+    });
+    // Map backend LabelOut to frontend Tag interface
+    return Array.from(uniqueLabels.entries()).map(([id, name]) => ({
+      id: String(id), // Convert ID to string for TagFilter compatibility
+      label: t(`labels.${name}`, name) // Use label name as fallback
+    }));
+  }, [originalNotes, t]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -47,44 +73,78 @@ const RecentNotesDisplay: React.FC = () => {
     setSearchTerm('');
   };
 
-  const handleTagToggle = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]
+  // Update handler to work with label IDs (as strings for TagFilter)
+  const handleLabelToggle = (labelId: string) => {
+    setSelectedLabelIds(prev => 
+      prev.includes(labelId) ? prev.filter(id => id !== labelId) : [...prev, labelId]
     );
   };
 
-  const loadMoreNotes = useCallback(() => {
-    if (layoutMode === 'masonry') {
-      const newLoadedCount = Math.min(allNotes.length, loadedCount + ITEMS_PER_LOAD * 2);
-      setDisplayedNotes(allNotes.slice(0, newLoadedCount));
-      setLoadedCount(newLoadedCount);
-    } else {
-      const newLoadedCount = loadedCount + ITEMS_PER_LOAD;
-      setDisplayedNotes(allNotes.slice(0, newLoadedCount));
-      setLoadedCount(newLoadedCount);
-    }
-  }, [loadedCount, allNotes, layoutMode]);
-
+  // Effect to fetch notes once on component mount
   useEffect(() => {
-    let filtered = mockNotes;
+    const fetchNotes = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('http://localhost:8000/notes/'); // Replace with your backend URL
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: NoteData[] = await response.json();
+        // Add a placeholder date for now if needed by NoteCard
+        const dataWithPlaceholderDate = data.map(note => ({
+          ...note,
+          date: note.date || 'No Date', // Use existing date or add placeholder
+        }));
+        setOriginalNotes(dataWithPlaceholderDate);
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+        setOriginalNotes([]); // Set to empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotes();
+  }, []); // Empty dependency array: fetch only once
+
+  // Effect to filter notes whenever search, selected labels, original data, or layout mode changes
+  useEffect(() => {
+    let currentFiltered = [...originalNotes];
+
     if (searchTerm) {
-      filtered = filtered.filter(note => 
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      currentFiltered = currentFiltered.filter(note =>
+        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (note.content && note.content.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(note => 
-        selectedTags.every(tag => note.tags?.includes(tag))
+
+    // Update filtering logic to use selectedLabelIds and note.label.id
+    if (selectedLabelIds.length > 0) {
+      currentFiltered = currentFiltered.filter(note =>
+        note.label && selectedLabelIds.includes(String(note.label.id)) // Check if note has a label and its ID is in selectedLabelIds
       );
     }
-    setAllNotes(filtered);
-    const initialLoadCount = layoutMode === 'masonry' ? Math.min(filtered.length, ITEMS_PER_LOAD * 2) : ITEMS_PER_LOAD;
-    setDisplayedNotes(filtered.slice(0, initialLoadCount));
-    setLoadedCount(initialLoadCount);
-  }, [searchTerm, selectedTags, layoutMode]);
+    
+    setFilteredNotes(currentFiltered);
 
-  const notesContainerClass = layoutMode === 'grid' 
+    const initialItemsToDisplay = layoutMode === 'masonry' 
+      ? Math.min(currentFiltered.length, ITEMS_PER_LOAD * 2) 
+      : Math.min(currentFiltered.length, ITEMS_PER_LOAD);
+    
+    setDisplayedNotes(currentFiltered.slice(0, initialItemsToDisplay));
+    setLoadedCount(initialItemsToDisplay);
+
+  }, [searchTerm, selectedLabelIds, originalNotes, layoutMode]); // Depend on selectedLabelIds
+
+  const loadMoreNotes = useCallback(() => {
+    const itemsToLoadNext = layoutMode === 'masonry' ? ITEMS_PER_LOAD * 2 : ITEMS_PER_LOAD;
+    const newLoadedCount = Math.min(filteredNotes.length, loadedCount + itemsToLoadNext);
+    
+    setDisplayedNotes(filteredNotes.slice(0, newLoadedCount));
+    setLoadedCount(newLoadedCount);
+  }, [loadedCount, filteredNotes, layoutMode]);
+
+  const notesContainerClass = layoutMode === 'grid'
     ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
     : "columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-6 space-y-6";
 
@@ -95,24 +155,36 @@ const RecentNotesDisplay: React.FC = () => {
           <div className="w-full sm:w-auto sm:flex-shrink-0">
             <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} onClearSearch={clearSearch} />
           </div>
-          <TagFilter availableTags={availableTags} selectedTags={selectedTags} onSelectTag={handleTagToggle} />
+          {/* Pass availableLabels and selectedLabelIds to TagFilter */}
+          <TagFilter availableTags={availableLabels} selectedTags={selectedLabelIds} onSelectTag={handleLabelToggle} />
         </div>
+        {/* Placeholder for ThemeToggle and LayoutModeSwitcher if they were intended here */}
+        {/* <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <LayoutModeSwitcher />
+        </div> */}
       </div>
       
       <h2 className="text-2xl font-semibold text-neutral-700 dark:text-neutral-200 mb-6 text-left">
         {t('notes.recentNotes', 'Recent Notes')}
       </h2>
 
-      {displayedNotes.length > 0 ? (
-        <motion.div 
+      {loading ? (
+        <p className="text-center text-neutral-500 dark:text-neutral-400 py-10">Loading notes...</p>
+      ) : displayedNotes.length > 0 ? (
+        <motion.div
           className={notesContainerClass}
-          key={layoutMode}
+          key={layoutMode} // Re-trigger animations when layout mode changes
         >
           <AnimatePresence>
             {displayedNotes.map(note => (
-              <NoteCard 
-                key={note.id} 
-                {...note} 
+              <NoteCard
+                key={note.id}
+                // Spread note properties.
+                // Ensure date is always passed to NoteCard, using placeholder if needed.
+                {...note}
+                id={String(note.id)} // Convert number id to string for NoteCardProps
+                date={note.date || 'No Date'} // Use existing date or placeholder
                 layoutMode={layoutMode}
                 onClick={() => console.log('Clicked note:', note.id)}
               />
@@ -121,11 +193,14 @@ const RecentNotesDisplay: React.FC = () => {
         </motion.div>
       ) : (
         <p className="text-center text-neutral-500 dark:text-neutral-400 py-10">
-          {t('notes.noNotesFound', 'No notes found matching your criteria.')}
+          {searchTerm || selectedLabelIds.length > 0 // Update check for selectedLabelIds
+            ? t('notes.noNotesFoundCriteria', 'No notes found matching your criteria.')
+            : t('notes.noNotesAvailable', 'No notes available.')
+          }
         </p>
       )}
 
-      {loadedCount < allNotes.length && (
+      {!loading && loadedCount < filteredNotes.length && (
         <div className="text-center mt-10">
           <motion.button
             onClick={loadMoreNotes}
@@ -142,4 +217,4 @@ const RecentNotesDisplay: React.FC = () => {
   );
 };
 
-export default RecentNotesDisplay; 
+export default RecentNotesDisplay;
