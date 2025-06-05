@@ -10,6 +10,7 @@ import { useLayoutMode } from '../contexts/LayoutModeContext';
 // import ThemeToggle from './ThemeToggle';
 // import LayoutModeSwitcher from './LayoutModeSwitcher';
 import type { LabelOut, FolderOut } from '../types/backend'; // Import types using type-only import
+import { useDeleteNote } from '../hooks/useNotes'; // Import the delete hook
 
 const ITEMS_PER_LOAD = 8;
 
@@ -49,6 +50,7 @@ const RecentNotesDisplay: React.FC = () => {
   const [loadedCount, setLoadedCount] = useState(ITEMS_PER_LOAD); // Will be adjusted by effects
   const [loading, setLoading] = useState(true);
   const { layoutMode } = useLayoutMode(); // Removed setLayoutMode as it's not used here
+  const { mutate: deleteNote } = useDeleteNote(); // Get the delete mutation function
 
   // Available labels derived from the original full dataset
   const availableLabels: Tag[] = useMemo(() => {
@@ -79,6 +81,24 @@ const RecentNotesDisplay: React.FC = () => {
       prev.includes(labelId) ? prev.filter(id => id !== labelId) : [...prev, labelId]
     );
   };
+
+  // Handler to delete a note
+  const handleDeleteNote = useCallback((noteId: number) => {
+    console.log('Attempting to delete note with ID:', noteId);
+    // Call the delete mutation
+    deleteNote(noteId, {
+      onSuccess: () => {
+        console.log('Note deleted successfully. Updating UI...');
+        // Manually update the state to remove the deleted note
+        setOriginalNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
+        // The useEffect depending on originalNotes will handle updating filteredNotes and displayedNotes
+      },
+      onError: (error) => {
+        console.error('Error deleting note:', error);
+        alert(t('notes.deleteError', 'Failed to delete note.') + ` ${error instanceof Error ? error.message : String(error)}`);
+      },
+    });
+  }, [deleteNote, t]);
 
   // Effect to fetch notes once on component mount
   useEffect(() => {
@@ -180,13 +200,13 @@ const RecentNotesDisplay: React.FC = () => {
             {displayedNotes.map(note => (
               <NoteCard
                 key={note.id}
-                // Spread note properties.
-                // Ensure date is always passed to NoteCard, using placeholder if needed.
+                // Destructure and pass note properties, excluding any potential onClick, and explicitly passing the required props
                 {...note}
-                id={String(note.id)} // Convert number id to string for NoteCardProps
+                id={String(note.id)} // Ensure id is passed as a string for the NoteCard's id prop
+                noteId={note.id} // Pass the numerical id to noteId prop
                 date={note.date || 'No Date'} // Use existing date or placeholder
                 layoutMode={layoutMode}
-                onClick={() => console.log('Clicked note:', note.id)}
+                onDeleteClick={handleDeleteNote} // Pass the delete handler
               />
             ))}
           </AnimatePresence>

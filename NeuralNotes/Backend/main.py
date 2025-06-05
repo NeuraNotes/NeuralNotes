@@ -1,16 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 from routers import notes, labels, users, auth, folders
 
 app = FastAPI()
 
-# CORS ayarları: Frontend'in backend'e istek göndermesine izin verir
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Production'da frontend URL'ini belirtin
+    allow_origins=["http://localhost:5173"],  # Allow requests from your frontend origin
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
 
 # API rotalarını uygulamaya dahil eder

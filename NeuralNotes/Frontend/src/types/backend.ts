@@ -13,13 +13,18 @@ export interface NoteCreate extends NoteBase {
     // No additional fields needed for creation beyond NoteBase
 }
 
-export interface NoteUpdate extends NoteBase {
-    // No additional fields needed for update beyond NoteBase
+export interface NoteUpdate {
+    title?: string; // Make optional for partial updates
+    content?: string; // Make optional for partial updates
+    label_id?: number | null; // Optional in backend schema
+    folder_ids?: number[] | null; // Add optional list of folder IDs
 }
 
 export interface NoteOut extends NoteBase {
     id: number;
     owner_id: number;
+    folders: FolderOut[];
+    label: LabelOut | null;
 }
 
 export interface FolderBase {
