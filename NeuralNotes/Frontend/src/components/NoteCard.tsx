@@ -105,13 +105,13 @@ const NoteCard: React.FC<NoteCardProps> = ({
 
       <motion.button
         onClick={handleDeleteClick}
-        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+        className="absolute top-2 right-2 text-yellow-400 hover:text-yellow-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.2 }}
       >
-        <Trash2 size={16} />
+        <Trash2 size={20} />
       </motion.button>
     </motion.div>
   );

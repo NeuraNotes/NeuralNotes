@@ -170,7 +170,7 @@ const NotePage = () => {
         {/* Delete Button */}
         <button
           onClick={handleDeleteClick}
-          className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-600 transition-colors duration-200"
+          className="p-1 text-yellow-500 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-600 transition-colors duration-200"
           title={t('notePage.deleteNote', 'Delete Note')}
         >
           <Trash2 size={20} />
