@@ -6,11 +6,9 @@ import {
   ChevronDown,
   X as IconX,
   LogOut,
-  CalendarDays,
   Folder as FolderIcon,
   FolderOpen,
   MessageSquare,
-  Brush,
   PlusCircle,
   type LucideIcon,
 } from 'lucide-react';
@@ -54,8 +52,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, folders, addFolder }
       icon: FolderIcon,
       children: folderNavItems,
     },
-    { id: 'calendar', label: t('sidebar.calendar', 'Calendar'), icon: CalendarDays, path: '/calendar', children: [] },
-    { id: 'canvas', label: t('sidebar.canvas', 'Canvas'), icon: Brush, path: '/canvas', children: [] },
     { id: 'recentChats', label: t('sidebar.recentChats', 'Recent Chats'), icon: MessageSquare, path: '/recent-chats', children: [] },
   ];
 
@@ -131,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, folders, addFolder }
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 z-30 bg-black/40 dark:bg-black/60 md:hidden backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/40 dark:bg-black/60 md:hidden backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { delay: 0.2, duration: 0.2 } }}
@@ -143,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, folders, addFolder }
             initial="closed"
             animate="open"
             exit="closed"
-            className="fixed top-0 left-0 h-full z-40 bg-white dark:bg-neutral-900/90 border-r border-neutral-200/70 dark:border-neutral-700/60 shadow-xl flex flex-col"
+            className="fixed top-0 left-0 h-full z-50 bg-white dark:bg-neutral-900/90 border-r border-neutral-200/70 dark:border-neutral-700/60 shadow-xl flex flex-col"
           >
             <motion.div variants={itemVariants} className="p-4 pr-3 border-b border-neutral-200/70 dark:border-neutral-700/60 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100">{t('app.name', 'NeuralNotes')}</h2>

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from routers import notes, labels, users, auth, folders
+from routers import notes, labels, users, auth, folders, ai_chat
 
 app = FastAPI()
 
@@ -20,6 +20,7 @@ app.include_router(labels.router)
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(folders.router)
+app.include_router(ai_chat.router)
 
 @app.get("/")
 def read_root():

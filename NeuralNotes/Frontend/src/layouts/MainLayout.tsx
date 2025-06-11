@@ -53,7 +53,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ folders, addFolder }) => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="flex items-center justify-between p-3 md:p-4 bg-white dark:bg-neutral-900 shadow-sm h-16 md:h-auto shrink-0">
+        <header className={`flex items-center justify-between p-3 md:p-4 bg-white dark:bg-neutral-900 shadow-sm h-16 md:h-auto shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen && !showBackButton ? 'ml-[280px]' : 'ml-0'}`}>
           <div className="flex items-center">
             {showBackButton ? (
               <button
@@ -96,7 +96,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ folders, addFolder }) => {
         {/* Content Area */}
         <main 
           className={`flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 transition-all duration-300 ease-in-out 
-            ${isSidebarOpen && !showBackButton ? 'md:ml-[280px]' : 'ml-0'}
+            ${isSidebarOpen && !showBackButton ? 'ml-[280px]' : 'ml-0'}
           `}
         >
           <AnimatePresence mode="wait">
