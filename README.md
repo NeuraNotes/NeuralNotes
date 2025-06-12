@@ -1,7 +1,12 @@
 **NeuralNotes**
 *AI-Assisted Note-Taking Platform*
 
+(MVP-Design)
 ![MVP_dashboard](https://github.com/user-attachments/assets/eae8c893-72b9-4066-b60d-87308891421c)
+
+(Currently)
+![image](https://github.com/user-attachments/assets/7df6cc40-4be2-4fdc-bee9-645f9afd94f6)
+
 ---
 
 ### **About**
